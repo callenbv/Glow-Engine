@@ -353,6 +353,10 @@ void Graphics::Renderer::createSamplerState()
 // bind a material to the renderer
 void Graphics::Renderer::BindMaterial(Materials::Material* mat)
 {
+    // Do not bind a bad material
+    if (!mat)
+        return;
+
     // assign material values to the buffer
     Materials::MaterialBufferCPU mb = {};
     mb.baseColor = { mat->diffuseColor.r, mat->diffuseColor.g, mat->diffuseColor.b, mat->dissolve };

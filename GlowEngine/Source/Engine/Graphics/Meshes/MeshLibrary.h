@@ -25,14 +25,22 @@ namespace Meshes
 
     // load all of our preset meshes (quad, etc
     void load();
+    // box mesh
+    void bindBuffers(std::vector<Vertex> vertices);
+    // build box vertices
+    void buildVertices(std::vector<Vertex>& out);
 
     // render common meshes
     void drawBox(Components::BoxCollider* box);
+    void drawBox(const Vector3D& pos, const Vector3D& scale, const DirectX::XMFLOAT4& rotQuat);
 
   private:
 
-    std::map<std::string, Meshes::Mesh*> meshes;
+      // buffers we can reuse for draw calls
+      ID3D11Buffer* indexBuffer;
+      ID3D11Buffer* vertexBuffer;
 
+    std::map<std::string, Meshes::Mesh*> meshes;
   };
 
 }

@@ -343,148 +343,6 @@
                     }
                 }
             },
-            "Entity16": {
-                "Components": {
-                    "Sprite3D": {
-                        "Materials": [
-                            {
-                                "mesh": 0,
-                                "name": "Yoke",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 1,
-                                "name": "Yoke",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 2,
-                                "name": "Yoke",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 3,
-                                "name": "Yoke",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 4,
-                                "name": "EggBody",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 5,
-                                "name": "Yoke",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 6,
-                                "name": "EggBody",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 7,
-                                "name": "Yoke",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 8,
-                                "name": "Potato",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 9,
-                                "name": "Potato",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 10,
-                                "name": "Potato",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 11,
-                                "name": "Potato",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 12,
-                                "name": "Potato",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 13,
-                                "name": "Potato",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 14,
-                                "name": "Potato",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 15,
-                                "name": "Green_Onion",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 16,
-                                "name": "Green_Onion",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 17,
-                                "name": "Green_Onion",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 18,
-                                "name": "Bowl",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 19,
-                                "name": "Soup",
-                                "section": 0
-                            },
-                            {
-                                "mesh": 20,
-                                "name": "Stepping_Stool",
-                                "section": 0
-                            }
-                        ],
-                        "Model": {
-                            "value": "Soup"
-                        },
-                        "Repeat Texture": {
-                            "value": false
-                        }
-                    },
-                    "Transform": {
-                        "Position": {
-                            "value": {
-                                "x": -39.199974060058594,
-                                "y": 4.299997806549072,
-                                "z": -31.70008659362793
-                            }
-                        },
-                        "Rotation": {
-                            "value": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            }
-                        },
-                        "Scale": {
-                            "value": {
-                                "x": 3.0,
-                                "y": 3.0,
-                                "z": 3.0
-                            }
-                        }
-                    }
-                }
-            },
             "Entity17": {
                 "Components": {
                     "Sprite3D": {
@@ -1072,12 +930,12 @@
                         "Materials": [
                             {
                                 "mesh": 0,
-                                "name": "RockMaterial.001",
+                                "name": "DefaultMaterial",
                                 "section": 0
                             }
                         ],
                         "Model": {
-                            "value": "Monkey"
+                            "value": "Pebble"
                         },
                         "Repeat Texture": {
                             "value": false
@@ -1087,7 +945,7 @@
                         "Position": {
                             "value": {
                                 "x": 0.0,
-                                "y": 6.86874532699585,
+                                "y": 5.268746852874756,
                                 "z": 0.0
                             }
                         },
@@ -1100,9 +958,9 @@
                         },
                         "Scale": {
                             "value": {
-                                "x": 2.0,
-                                "y": 2.0,
-                                "z": 2.0
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
                             }
                         }
                     }

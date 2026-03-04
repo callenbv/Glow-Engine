@@ -28,7 +28,8 @@ namespace Parse
 
     void parse(); // parse data and save to indices/vertices
     void parseAssimp(Models::Model* model); // parse model and animation data
-    void parseMTL(const aiScene* materials, Models::Model* modelToLoadInto); // parse MTL data (texture names)
+    void parseMTL(const aiScene* materials, Models::Model* modelToLoadInto); // parse MTL data 
+    void parseMTLIsolated(Materials::Material* mat); // parse MTL data with no model reliance
     void processAnimation(const aiScene* scene);
 
     void close();
@@ -36,8 +37,6 @@ namespace Parse
 
     // get the indices
     const std::vector<Index>& getIndices();
-    // get the vertex indices
-    const std::vector<unsigned short>& getVertexIndices();
     // get the vertices
     const std::vector<Vertex>& getVertices();
     // get the filename

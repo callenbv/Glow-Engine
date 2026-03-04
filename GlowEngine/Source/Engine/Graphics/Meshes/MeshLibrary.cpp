@@ -11,6 +11,8 @@
 #include "Engine/Graphics/Meshes/Mesh.h"
 #include "Engine/Graphics/Renderer.h"
 #include "Engine/Entity/Components/Visual/Models/ModelLibrary.h"
+#include "Engine/Graphics/Materials/Material.h"
+#include "Engine/Graphics/Materials/MaterialLibrary.h"
 #include "Engine/GlowEngine.h"
 
 // add a mesh to the library
@@ -77,82 +79,149 @@ void Meshes::MeshLibrary::load()
   quadMesh->setIndices(indices);
 }
 
+// setup the buffers for indices and vertices
+void Meshes::MeshLibrary::bindBuffers(std::vector<Vertex> vertices)
+{
+    ID3D11Device* device = EngineInstance::getEngine()->getRenderer()->getDevice();
+
+    D3D11_BUFFER_DESC vertexBufferDesc;
+    ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+    vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    vertexBufferDesc.ByteWidth = (UINT)(sizeof(Vertex) * vertices.size());
+    vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    vertexBufferDesc.CPUAccessFlags = 0;
+    vertexBufferDesc.MiscFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA vertexData;
+    ZeroMemory(&vertexData, sizeof(vertexData));
+    vertexData.pSysMem = vertices.data();
+    HRESULT result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &vertexBuffer);
+    std::vector<unsigned> indices = {
+          0, 1, 2, 2, 3, 0, // Front face
+          4, 5, 6, 6, 7, 4, // Back face
+          0, 1, 5, 5, 4, 0, // Bottom face
+          2, 3, 7, 7, 6, 2, // Top face
+          0, 3, 7, 7, 4, 0, // Left face
+          1, 2, 6, 6, 5, 1  // Right face
+    };
+
+    D3D11_BUFFER_DESC indexBufferDesc;
+    ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
+    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    indexBufferDesc.ByteWidth = (UINT)(sizeof(unsigned) * indices.size());
+    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    indexBufferDesc.CPUAccessFlags = 0;
+    indexBufferDesc.MiscFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA indexData;
+    ZeroMemory(&indexData, sizeof(indexData));
+    indexData.pSysMem = indices.data();
+
+    result = device->CreateBuffer(&indexBufferDesc, &indexData, &indexBuffer);
+}
+
+void Meshes::MeshLibrary::buildVertices(std::vector<Vertex>& out)
+{
+    out.clear();
+    out.reserve(24);
+
+    const float x0 = -0.5f, x1 = 0.5f;
+    const float y0 = -0.5f, y1 = 0.5f;
+    const float z0 = -0.5f, z1 = 0.5f;
+
+    auto V = [](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> Vertex
+        {
+            Vertex vert{};
+            vert.x = x;
+            vert.y = y;
+            vert.z = z;
+            vert.nx = nx;
+            vert.ny = ny;
+            vert.nz = nz;
+
+            vert.tx = u;
+            vert.ty = v;
+
+            return vert;
+        };
+
+    // +Z (front)
+    out.push_back(V(x0, y0, z1, 0, 0, 1, 0, 1));
+    out.push_back(V(x0, y1, z1, 0, 0, 1, 0, 0));
+    out.push_back(V(x1, y1, z1, 0, 0, 1, 1, 0));
+    out.push_back(V(x1, y0, z1, 0, 0, 1, 1, 1));
+
+    // -Z (back)
+    out.push_back(V(x1, y0, z0, 0, 0, -1, 0, 1));
+    out.push_back(V(x1, y1, z0, 0, 0, -1, 0, 0));
+    out.push_back(V(x0, y1, z0, 0, 0, -1, 1, 0));
+    out.push_back(V(x0, y0, z0, 0, 0, -1, 1, 1));
+
+    // +X (right)
+    out.push_back(V(x1, y0, z1, 1, 0, 0, 0, 1));
+    out.push_back(V(x1, y1, z1, 1, 0, 0, 0, 0));
+    out.push_back(V(x1, y1, z0, 1, 0, 0, 1, 0));
+    out.push_back(V(x1, y0, z0, 1, 0, 0, 1, 1));
+
+    // -X (left)
+    out.push_back(V(x0, y0, z0, -1, 0, 0, 0, 1));
+    out.push_back(V(x0, y1, z0, -1, 0, 0, 0, 0));
+    out.push_back(V(x0, y1, z1, -1, 0, 0, 1, 0));
+    out.push_back(V(x0, y0, z1, -1, 0, 0, 1, 1));
+
+    // +Y (top)
+    out.push_back(V(x0, y1, z1, 0, 1, 0, 0, 1));
+    out.push_back(V(x0, y1, z0, 0, 1, 0, 0, 0));
+    out.push_back(V(x1, y1, z0, 0, 1, 0, 1, 0));
+    out.push_back(V(x1, y1, z1, 0, 1, 0, 1, 1));
+
+    // -Y (bottom)
+    out.push_back(V(x0, y0, z0, 0, -1, 0, 0, 1));
+    out.push_back(V(x0, y0, z1, 0, -1, 0, 0, 0));
+    out.push_back(V(x1, y0, z1, 0, -1, 0, 1, 0));
+    out.push_back(V(x1, y0, z0, 0, -1, 0, 1, 1));
+}
+
 // draw a cube mesh
+// Overload that draws a unit cube mesh using pos/scale/rotation
+void Meshes::MeshLibrary::drawBox(const Vector3D& pos, const Vector3D& scale, const DirectX::XMFLOAT4& rotQuat)
+{
+    Graphics::Renderer* renderer = EngineInstance::getEngine()->getRenderer();
+    auto* ctx = renderer->getDeviceContext();
+
+    std::vector<Vertex> vertices;
+
+    // Build world matrix
+    DirectX::XMMATRIX S = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
+    DirectX::XMMATRIX R = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&rotQuat));
+    DirectX::XMMATRIX T = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
+
+    DirectX::XMMATRIX world = S * R * T;
+
+    // Add vertices to the vector
+    buildVertices(vertices);
+    bindBuffers(vertices);
+
+    renderer->updateObjectBufferWorldMatrix(world);
+    renderer->updateObjectBuffer();
+    renderer->BindMaterial(EngineInstance::getEngine()->getMaterialLibrary()->get("DebugMaterial"));
+
+    UINT stride = sizeof(Vertex);
+    UINT offset = 0;
+    ctx->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+    ctx->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    ctx->DrawIndexed(36, 0, 0);
+}
+
+// Your existing collider convenience wrapper can just forward:
 void Meshes::MeshLibrary::drawBox(Components::BoxCollider* box)
 {
-  //std::vector<Vertex> vertices = box->getVertices();
+    Vector3D scale = box->getMeshScale();
+    Vector3D pos = getComponentOfType(Transform, box->parent)->getPosition();
 
-  //if (vertices.empty())
-  //  return;
+    // Identity rotation unless you have a real quaternion to pass in
+    DirectX::XMFLOAT4 rot = { 0, 0, 0, 1 };
 
-  //Graphics::Renderer* renderer = EngineInstance::getEngine()->getRenderer();
-  //ID3D11DeviceContext* deviceContext = renderer->getDeviceContext();
-  //ID3D11Device* device = renderer->getDevice();
-  //
-  //ID3D11Buffer* vertexBuffer;
-  //ID3D11Buffer* indexBuffer;
-
-  //// Define vertices
-  //D3D11_BUFFER_DESC vertexBufferDesc;
-  //ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
-  //vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-  //vertexBufferDesc.ByteWidth = (UINT)(sizeof(Vertex) * vertices.size());
-  //vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-  //vertexBufferDesc.CPUAccessFlags = 0;
-  //vertexBufferDesc.MiscFlags = 0;
-
-  //D3D11_SUBRESOURCE_DATA vertexData;
-  //ZeroMemory(&vertexData, sizeof(vertexData));
-  //vertexData.pSysMem = vertices.data();
-
-  //HRESULT result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &vertexBuffer);
-
-  //std::vector<unsigned> indices = {
-  //      0, 1, 2, 2, 3, 0, // Front face
-  //      4, 5, 6, 6, 7, 4, // Back face
-  //      0, 1, 5, 5, 4, 0, // Bottom face
-  //      2, 3, 7, 7, 6, 2, // Top face
-  //      0, 3, 7, 7, 4, 0, // Left face
-  //      1, 2, 6, 6, 5, 1  // Right face
-  //};
-
-  //D3D11_BUFFER_DESC indexBufferDesc;
-  //ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
-  //indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-  //indexBufferDesc.ByteWidth = (UINT)(sizeof(unsigned) * indices.size());
-  //indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-  //indexBufferDesc.CPUAccessFlags = 0;
-  //indexBufferDesc.MiscFlags = 0;
-
-  //D3D11_SUBRESOURCE_DATA indexData;
-  //ZeroMemory(&indexData, sizeof(indexData));
-  //indexData.pSysMem = indices.data();
-
-  //result = device->CreateBuffer(&indexBufferDesc, &indexData, &indexBuffer);
-
-  //Vector3D scale = box->getMeshScale();
-  //Vector3D pos = getComponentOfType(Transform,box->parent)->getPosition();
-  //DirectX::XMFLOAT4 rotation = { 0,0,0,0 };
-
-  //DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
-  //DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&rotation)); // Assuming rotation is an XMFLOAT4 representing a quaternion
-  //DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
-
-  //// Combine the transformations
-  //DirectX::XMMATRIX final = scaleMatrix * rotationMatrix * translationMatrix;
-
-  //// update the constant buffer's world matrix
-  //renderer->updateObjectBufferWorldMatrix(final);
-
-  //renderer->updateObjectBuffer();
-
-  //UINT stride = sizeof(Vertex);
-  //UINT offset = 0;
-  //deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-  //deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-  //deviceContext->DrawIndexed(36, 0, 0);
-
-  //indexBuffer->Release();
-  //vertexBuffer->Release();
+    drawBox(pos, scale, rot);
 }

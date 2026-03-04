@@ -87,7 +87,7 @@ float4 main(PixelInputType input) : SV_TARGET
 
     // Fog
     float fogStart = 125.0f;
-    float fogEnd = 250.0f;
+    float fogEnd = 350.0f;
     float fogDistance = length(input.worldpos.xyz - cameraPosition);
     float fogFactor = saturate((fogEnd - fogDistance) / (fogEnd - fogStart));
     float3 fogColor = float3(0.5, 0.5, 0.5);

@@ -247,9 +247,6 @@ void Parse::ObjectLoader::parseAssimp(Models::Model* modelToLoadInto)
         // add the mesh to the model
         modelToLoadInto->addMesh(gMesh);
     }
-
-    // TO-DO: Parse FBX animation data
-    // processAnimation(scene);
 }
 
 // parse MTL data - this contains things like texture names
@@ -313,6 +310,11 @@ void Parse::ObjectLoader::parseMTL(const aiScene* scene, Models::Model* modelToL
             }
         }
     }
+}
+
+// process MTL files and load it into a material
+void Parse::ObjectLoader::parseMTLIsolated(Materials::Material* mat)
+{
 }
 
 // process the animation data from the scene
