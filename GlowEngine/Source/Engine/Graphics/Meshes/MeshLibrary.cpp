@@ -198,13 +198,16 @@ void Meshes::MeshLibrary::drawBox(const Vector3D& pos, const Vector3D& scale, co
 
     DirectX::XMMATRIX world = S * R * T;
 
+    // Set unlit shader
+    renderer->setPixelShader("UnlitPixelShader");
+
     // Add vertices to the vector
     buildVertices(vertices);
     bindBuffers(vertices);
 
     renderer->updateObjectBufferWorldMatrix(world);
     renderer->updateObjectBuffer();
-    renderer->BindMaterial(EngineInstance::getEngine()->getMaterialLibrary()->get("DebugMaterial"));
+    renderer->BindMaterial(EngineInstance::getEngine()->getMaterialLibrary()->get("RedMaterial"));
 
     UINT stride = sizeof(Vertex);
     UINT offset = 0;
@@ -212,12 +215,14 @@ void Meshes::MeshLibrary::drawBox(const Vector3D& pos, const Vector3D& scale, co
     ctx->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
     ctx->DrawIndexed(36, 0, 0);
+
+    renderer->setPixelShader("PixelShader");
 }
 
 // Your existing collider convenience wrapper can just forward:
 void Meshes::MeshLibrary::drawBox(Components::BoxCollider* box)
 {
-    Vector3D scale = box->getMeshScale();
+    Vector3D scale = box->getHitboxSize();
     Vector3D pos = getComponentOfType(Transform, box->parent)->getPosition();
 
     // Identity rotation unless you have a real quaternion to pass in

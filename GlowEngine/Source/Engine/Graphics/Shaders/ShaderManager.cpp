@@ -51,6 +51,7 @@ void Shaders::ShaderManager::load()
 {
   createShader("VertexShader", ShaderType::Vertex);
   createShader("PixelShader", ShaderType::Pixel);
+  createShader("UnlitPixelShader", ShaderType::Pixel);
 }
 
 ID3D11VertexShader* Shaders::ShaderManager::getVertexShader(std::string name)

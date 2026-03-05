@@ -15,6 +15,7 @@
 #include "Engine/Graphics/Window/Window.h"
 #include "Engine/Graphics/Textures/stb_image.h"
 #include "Engine/Graphics/Textures/TextureLibrary.h"
+#include "Engine/Graphics/Shaders/Shader.h"
 #include <filesystem>
 #include "Game/Scene/SceneSystem.h"
 
@@ -25,13 +26,14 @@ static PointLight* pointLightsArray[MAXLIGHTS];
 // initialize the graphics renderer properties
 Graphics::Renderer::Renderer(HWND handle)
   :
-  windowHandle(handle),
-  pixelShader(nullptr),
-  vertexShader(nullptr),
-  camera(nullptr),
-  sampler(nullptr),
-  glowGui(nullptr),
-  lights(0)
+    windowHandle(handle),
+    pixelShader(nullptr),
+    unlitShader(nullptr),
+    vertexShader(nullptr),
+    camera(nullptr),
+    sampler(nullptr),
+    glowGui(nullptr),
+    lights(0)
 {
   // engine
   engine = EngineInstance::getEngine();
@@ -175,6 +177,7 @@ void Graphics::Renderer::loadShaders()
   // bind our main shaders to the device context
   vertexShader = shaderManager->getVertexShader("VertexShader");
   pixelShader = shaderManager->getPixelShader("PixelShader");
+  unlitShader = shaderManager->getPixelShader("UnlitPixelShader");
 
   deviceContext->VSSetShader(vertexShader, nullptr, 0);
   deviceContext->PSSetShader(pixelShader, nullptr, 0);
@@ -355,19 +358,21 @@ void Graphics::Renderer::BindMaterial(Materials::Material* mat)
 {
     // Do not bind a bad material
     if (!mat)
-        return;
+    {
+        throw std::exception("ERROR: Tried to bind NULL material");
+    }
 
     // assign material values to the buffer
     Materials::MaterialBufferCPU mb = {};
     mb.baseColor = { mat->diffuseColor.r, mat->diffuseColor.g, mat->diffuseColor.b, mat->dissolve };
-    mb.specularColor = { mat->specularColor.r, mat->specularColor.g, mat->specularColor.b };
-    mb.shininess = mat->shininess;
-    mb.useTexture = mat->diffuseSRV ? 1.0f : 0.0f;
+    mb.specularData = { mat->specularColor.r, mat->specularColor.g, mat->specularColor.b, mat->shininess };
+    mb.ambientData = { mat->ambientColor.r, mat->ambientColor.g, mat->ambientColor.b, 0.0f };
 
-    mb.useTexture = (mat->diffuseTexture != nullptr) ? 1.0f : 0.0f;
+    const bool hasDiffuse = (mat->diffuseTexture);
+    mb.ambientData.w = hasDiffuse ? 1.0f : 0.0f;
 
     float r = mat->diffuseColor.r, g = mat->diffuseColor.g, b = mat->diffuseColor.b;
-    if (mb.useTexture > 0.0f)
+    if (mb.ambientData.w > 0.0f)
     {
         r = g = b = 1.0f;
         mb.baseColor = { r, g, b, mat->dissolve };
@@ -398,7 +403,7 @@ void Graphics::Renderer::BindMaterial(Materials::Material* mat)
     materialBuffer->updateAndBind();
 
     // bind material textures
-    if (mat->diffuseTexture)
+    if (hasDiffuse)
     {
         deviceContext->PSSetShaderResources(0, 1, mat->diffuseTexture->getTextureView());
     }
@@ -449,9 +454,9 @@ void Graphics::Renderer::UpdateBuffers()
 {
   // temporary global light data for testing
   GlobalLightBuffer lightData;
-  lightData.cameraPosition = { DirectX::XMVectorGetX(camera->getPosition()),DirectX::XMVectorGetY(camera->getPosition()),DirectX::XMVectorGetZ(camera->getPosition()) };
-  lightData.lightColor = { 0.75f,0.75f,0.75f };
-  lightData.lightDirection = { 0.5f,-0.8f,-0.5f };
+  lightData.cameraPos_ws = { DirectX::XMVectorGetX(camera->getPosition()),DirectX::XMVectorGetY(camera->getPosition()),DirectX::XMVectorGetZ(camera->getPosition()), 0 };
+  lightData.lightColor = { 0.75f,0.75f,0.75f, 1.f };
+  lightData.lightDir_ws = { 0.5f,-0.8f,-0.5f, 0.f };
   globalLightBuffer->set(lightData);
 
   // for now, we just have one light
@@ -580,6 +585,17 @@ void Graphics::Renderer::setBackgroundColor(float color[4])
   backgroundColor[1] = color[1];
   backgroundColor[2] = color[2];
   backgroundColor[3] = color[3];
+}
+
+// set the pixel shader
+void Graphics::Renderer::setPixelShader(std::string name)
+{
+    Shaders::Shader* shader = shaderManager->get(name);
+
+    if (shader)
+    {
+        deviceContext->PSSetShader(shader->getPixelShader(), nullptr, 0);
+    }
 }
 
 void Graphics::Renderer::toggleDebugMode()

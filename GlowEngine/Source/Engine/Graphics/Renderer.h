@@ -85,6 +85,11 @@ namespace Graphics
     void setRenderTargetProperties(float x, float y, float width, float height);
     void setBackgroundColor(float color[4]);
 
+    // get the shader manager
+    Shaders::ShaderManager* getShaderManager() { return shaderManager; }
+    // set the pixel shader
+    void setPixelShader(std::string name);
+
     void toggleDebugMode();
     bool isDebugMode();
     bool& getDebugMode() { return debug; }
@@ -170,6 +175,7 @@ namespace Graphics
 
     // shaders
     ID3D11PixelShader* pixelShader;
+    ID3D11PixelShader* unlitShader;
     ID3D11VertexShader* vertexShader;
 
     // buffers

@@ -15,16 +15,13 @@
 namespace Lighting
 {
 
-  // define world light
-  struct GlobalLightBuffer
-  {
-    DirectX::XMFLOAT3 lightDirection;
-    float padding;
-    DirectX::XMFLOAT3 lightColor;
-    float padding2;
-    DirectX::XMFLOAT3 cameraPosition;
-    float padding3;
-  };
+    // define world light
+    struct GlobalLightBuffer
+    {
+        DirectX::XMFLOAT4 lightDir_ws;
+        DirectX::XMFLOAT4 lightColor;
+        DirectX::XMFLOAT4 cameraPos_ws;
+    };
 
   // define a point light buffer
   struct PointLightBuffer

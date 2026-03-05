@@ -14,6 +14,26 @@
 #include "Engine/Graphics/Textures/TextureLibrary.h"
 #include <sstream>
 
+static inline void ltrim(std::string& s) 
+{
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isspace(c); }));
+}
+
+static inline void rtrim(std::string& s) 
+{
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char c) { return !std::isspace(c); }).base(), s.end());
+}
+
+static inline void trim(std::string& s) { ltrim(s); rtrim(s); }
+
+static inline std::string stripQuotes(std::string s) 
+{
+    trim(s);
+    if (s.size() >= 2 && ((s.front() == '"' && s.back() == '"') || (s.front() == '\'' && s.back() == '\'')))
+        return s.substr(1, s.size() - 2);
+    return s;
+}
+
 // default constructor for object loading
 Parse::ObjectLoader::ObjectLoader()
   :
@@ -242,7 +262,6 @@ void Parse::ObjectLoader::parseAssimp(Models::Model* modelToLoadInto)
         section.materialName = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
         gMesh->addSection(section);
         auto* aMat = scene->mMaterials[mesh->mMaterialIndex];
-        Logger::write(meshName + " uses " + std::string(aMat->GetName().C_Str()));
 
         // add the mesh to the model
         modelToLoadInto->addMesh(gMesh);
@@ -315,6 +334,118 @@ void Parse::ObjectLoader::parseMTL(const aiScene* scene, Models::Model* modelToL
 // process MTL files and load it into a material
 void Parse::ObjectLoader::parseMTLIsolated(Materials::Material* mat)
 {
+    if (!mat) return;
+
+    std::ifstream mtl(fileName);
+    if (!mtl.is_open())
+    {
+        Logger::write("Failed to open MTL: " + fileName);
+        return;
+    }
+
+    // directory of the .mtl so relative texture paths resolve.
+    const std::filesystem::path mtlPath(fileName);
+    const std::filesystem::path mtlDir = mtlPath.has_parent_path() ? mtlPath.parent_path() : std::filesystem::path{};
+
+    bool appliedFirstNewMtl = false;
+
+    std::string line;
+    while (std::getline(mtl, line))
+    {
+        // remove comments
+        if (auto hash = line.find('#'); hash != std::string::npos)
+            line = line.substr(0, hash);
+
+        trim(line);
+        if (line.empty()) continue;
+
+        std::istringstream iss(line);
+        std::string key;
+        iss >> key;
+
+        // handle multiple spaces and tabs
+        if (key == "newmtl")
+        {
+            std::string name;
+            std::getline(iss, name);
+            name = stripQuotes(name);
+            trim(name);
+
+            if (!appliedFirstNewMtl && !name.empty())
+            {
+                mat->setName(name);
+                appliedFirstNewMtl = true;
+            }
+        }
+        else if (key == "Kd")
+        {
+            float r, g, b;
+            if (iss >> r >> g >> b)
+                mat->diffuseColor = { r, g, b };
+        }
+        else if (key == "Ka")
+        {
+            float r, g, b;
+            if (iss >> r >> g >> b)
+                mat->ambientColor = { r, g, b };
+        }
+        else if (key == "Ks")
+        {
+            float r, g, b;
+            if (iss >> r >> g >> b)
+                mat->specularColor = { r, g, b };
+        }
+        else if (key == "Ns")
+        {
+            float ns;
+            if (iss >> ns)
+                mat->shininess = ns;
+        }
+        else if (key == "d")
+        {
+            float d;
+            if (iss >> d)
+                mat->dissolve = d; // opacity
+        }
+        else if (key == "Tr")
+        {
+            float tr;
+            if (iss >> tr)
+                mat->dissolve = 1.0f - tr; // common convention
+        }
+        else if (key == "map_Kd")
+        {
+            // map_Kd can include options like "-s 1 1 1" or "-o 0 0 0"
+            // we'll parse tokens and take the last token as the path (good enough for most exporters)
+            std::string tok, last;
+            while (iss >> tok) last = tok;
+
+            if (!last.empty())
+            {
+                last = stripQuotes(last);
+
+                // Resolve relative paths against the .mtl directory
+                std::filesystem::path texPath = std::filesystem::path(last);
+                if (texPath.is_relative())
+                    texPath = mtlDir / texPath;
+
+                // You’re currently keying textures by stem name:
+                std::string keyName = texPath.stem().string();
+
+                auto* texLib = EngineInstance::getEngine()->getTextureLibrary();
+                auto* found = texLib->get(keyName);
+
+                if (found)
+                {
+                    mat->diffuseTexture = found;
+                }
+            }
+        }
+    }
+
+    // If the MTL had no newmtl line, keep existing mat name (or set from filename)
+    if (mat->getName().empty())
+        mat->setName(mtlPath.stem().string());
 }
 
 // process the animation data from the scene

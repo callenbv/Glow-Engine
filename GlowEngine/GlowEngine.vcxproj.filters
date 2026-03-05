@@ -608,5 +608,6 @@
     <FxCompile Include="Source\Shaders\VertexShadowMapShader.hlsl">
       <Filter>Source Files\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="Source\Shaders\UnlitPixelShader.hlsl" />
   </ItemGroup>
 </Project>

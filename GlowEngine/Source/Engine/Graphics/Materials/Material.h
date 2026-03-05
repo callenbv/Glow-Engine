@@ -20,10 +20,8 @@ namespace Materials
     struct MaterialBufferCPU
     {
         DirectX::XMFLOAT4 baseColor;
-        DirectX::XMFLOAT3 specularColor;
-        float shininess;
-        float useTexture;
-        DirectX::XMFLOAT3 padding; // keep 16 byte allignment
+        DirectX::XMFLOAT4 specularData;
+        DirectX::XMFLOAT4 ambientData;
     };
 
     class Material
