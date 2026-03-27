@@ -6,9 +6,9 @@ A custom 3D game engine built in C++ with DirectX 11, focused on real-time rende
 
 ## Demo
 
-1. Open `GlowEngine.sln` in Visual Studio 2022  
-2. Build (Debug or Release, x64)  
-3. Run `GlowEngine.exe`  
+1. Open the `Demo` folder
+2. Run `GlowEngine.exe`  
+3. Explore the scene by pressing the "Play" button icon 
 
 Controls:  
 WASD — Move  
@@ -17,6 +17,7 @@ Space / Shift — Up / Down
 Right Click — Pivot  
 Tab — Fullscreen  
 G — Debug visuals  
+ESCAPE - Stop Game/Force Quit
 
 ---
 
